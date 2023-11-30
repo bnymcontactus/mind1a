@@ -11,11 +11,6 @@ document.addEventListener("DOMContentLoaded", function() {
     function toggleDrawingMode() {
         isDrawingMode = !isDrawingMode;
         canvas.isDrawingMode = isDrawingMode;
-        if (!isDrawingMode) {
-            // Remove the dot created by double-tapping or double-clicking
-            canvas.remove(canvas.getActiveObject());
-            canvas.discardActiveObject();
-        }
     }
 
     // Handle double-tap for touch devices
@@ -28,6 +23,12 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         lastTap = currentTime;
     });
+
+    // Add a button to manually toggle drawing mode
+    var toggleButton = document.createElement('button');
+    toggleButton.innerHTML = 'Toggle Mode';
+    toggleButton.onclick = toggleDrawingMode;
+    document.body.appendChild(toggleButton);
 
     // Function to update arrow position
     function updateArrow(arrow) {
@@ -74,11 +75,6 @@ document.addEventListener("DOMContentLoaded", function() {
         if (activeObject.lines) {
             activeObject.lines.forEach(line => updateArrow(line));
         }
-    });
-
-    // Toggle drawing mode on double-click
-    canvas.on('mouse:dblclick', function() {
-        toggleDrawingMode();
     });
 
     // Save functionality
