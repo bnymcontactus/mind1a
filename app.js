@@ -4,7 +4,6 @@ document.addEventListener("DOMContentLoaded", function() {
     fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
 
     let isDrawingMode = true;
-    let lastTap = 0;
     canvas.isDrawingMode = isDrawingMode;
     let selectedObjects = [];
     let arrow;
@@ -12,24 +11,11 @@ document.addEventListener("DOMContentLoaded", function() {
     function toggleDrawingMode() {
         isDrawingMode = !isDrawingMode;
         canvas.isDrawingMode = isDrawingMode;
-    }
-
-    function logDebugInfo(message) {
-        var debugPanel = document.getElementById('debugPanel');
-        debugPanel.innerHTML += `<p>${message}</p>`;
-        debugPanel.scrollTop = debugPanel.scrollHeight;
-    }
-
-    canvas.on('touch:gesture', function(e) {
-        var currentTime = new Date().getTime();
-        var tapLength = currentTime - lastTap;
-        logDebugInfo(`Touch gesture detected. Interval: ${tapLength}ms`);
-        if (tapLength < 500 && tapLength > 0) {
-            toggleDrawingMode();
-            e.e.preventDefault();
+        if (!isDrawingMode && canvas.getActiveObject()) {
+            canvas.getActiveObject().toGroup();
+            canvas.requestRenderAll();
         }
-        lastTap = currentTime;
-    });
+    }
 
     var toggleButton = document.getElementById('toggleButton');
     toggleButton.onclick = toggleDrawingMode;
@@ -60,7 +46,6 @@ document.addEventListener("DOMContentLoaded", function() {
     canvas.on('selection:created', function(e) {
         if (!isDrawingMode) {
             selectedObjects.push(e.selected[0]);
-
             if (selectedObjects.length === 2) {
                 arrow = createArrow(selectedObjects[0], selectedObjects[1]);
                 selectedObjects.forEach(obj => obj.lines = (obj.lines || []).concat(arrow));
@@ -75,6 +60,27 @@ document.addEventListener("DOMContentLoaded", function() {
             activeObject.lines.forEach(line => updateArrow(line));
         }
     });
+
+    // Functionality to add random shapes
+    function addRandomShapes() {
+        var colors = ['red', 'blue', 'green'];
+        colors.forEach(color => {
+            var shape = new fabric.Rect({
+                top: Math.random() * canvas.height, 
+                left: Math.random() * canvas.width, 
+                width: Math.random() * 100, 
+                height: Math.random() * 100, 
+                fill: color
+            });
+            canvas.add(shape);
+        });
+    }
+
+    // Adding a button to add random shapes
+    var addShapesButton = document.createElement('button');
+    addShapesButton.innerHTML = 'Add Random Shapes';
+    addShapesButton.onclick = addRandomShapes;
+    document.body.appendChild(addShapesButton);
 
     document.getElementById('saveButton').addEventListener('click', function() {
         var svg = canvas.toSVG();
