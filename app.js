@@ -7,25 +7,16 @@ document.addEventListener("DOMContentLoaded", function() {
     canvas.isDrawingMode = isDrawingMode;
     let selectedObjects = [];
     let arrow;
+    let group = null;
 
     function toggleDrawingMode() {
         isDrawingMode = !isDrawingMode;
         canvas.isDrawingMode = isDrawingMode;
-        if (!isDrawingMode && canvas.getActiveObject()) {
-            canvas.getActiveObject().toGroup();
-            canvas.requestRenderAll();
-        }
+        group = null; // Reset group when toggling mode
     }
 
     var toggleButton = document.getElementById('toggleButton');
     toggleButton.onclick = toggleDrawingMode;
-
-    function updateArrow(arrow) {
-        if (!arrow) return;
-        var points = [arrow.start.left, arrow.start.top, arrow.end.left, arrow.end.top];
-        arrow.set({ x1: points[0], y1: points[1], x2: points[2], y2: points[3] });
-        canvas.renderAll();
-    }
 
     function createArrow(fromObj, toObj) {
         var points = [fromObj.left, fromObj.top, toObj.left, toObj.top];
@@ -38,13 +29,27 @@ document.addEventListener("DOMContentLoaded", function() {
             start: fromObj,
             end: toObj
         });
-
         canvas.add(newArrow);
         return newArrow;
     }
 
+    function updateArrow(arrow) {
+        if (!arrow) return;
+        var points = [arrow.start.left, arrow.start.top, arrow.end.left, arrow.end.top];
+        arrow.set({ x1: points[0], y1: points[1], x2: points[2], y2: points[3] });
+        canvas.renderAll();
+    }
+
     canvas.on('selection:created', function(e) {
         if (!isDrawingMode) {
+            if (!group) {
+                group = new fabric.Group(e.selected, { canvas: canvas });
+            } else {
+                group.addWithUpdate(e.selected[0]);
+            }
+            canvas.setActiveObject(group);
+            canvas.requestRenderAll();
+        } else {
             selectedObjects.push(e.selected[0]);
             if (selectedObjects.length === 2) {
                 arrow = createArrow(selectedObjects[0], selectedObjects[1]);
@@ -60,27 +65,6 @@ document.addEventListener("DOMContentLoaded", function() {
             activeObject.lines.forEach(line => updateArrow(line));
         }
     });
-
-    // Functionality to add random shapes
-    function addRandomShapes() {
-        var colors = ['red', 'blue', 'green'];
-        colors.forEach(color => {
-            var shape = new fabric.Rect({
-                top: Math.random() * canvas.height, 
-                left: Math.random() * canvas.width, 
-                width: Math.random() * 100, 
-                height: Math.random() * 100, 
-                fill: color
-            });
-            canvas.add(shape);
-        });
-    }
-
-    // Adding a button to add random shapes
-    var addShapesButton = document.createElement('button');
-    addShapesButton.innerHTML = 'Add Random Shapes';
-    addShapesButton.onclick = addRandomShapes;
-    document.body.appendChild(addShapesButton);
 
     document.getElementById('saveButton').addEventListener('click', function() {
         var svg = canvas.toSVG();
