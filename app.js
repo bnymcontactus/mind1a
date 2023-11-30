@@ -13,10 +13,16 @@ document.addEventListener("DOMContentLoaded", function() {
         canvas.isDrawingMode = isDrawingMode;
     }
 
-    // Handle double-tap for touch devices
+    function logDebugInfo(message) {
+        var debugPanel = document.getElementById('debugPanel');
+        debugPanel.innerHTML += `<p>${message}</p>`;
+        debugPanel.scrollTop = debugPanel.scrollHeight;
+    }
+
     canvas.on('touch:gesture', function(e) {
         var currentTime = new Date().getTime();
         var tapLength = currentTime - lastTap;
+        logDebugInfo(`Touch gesture detected. Interval: ${tapLength}ms`);
         if (tapLength < 500 && tapLength > 0) {
             toggleDrawingMode();
             e.e.preventDefault();
@@ -24,13 +30,9 @@ document.addEventListener("DOMContentLoaded", function() {
         lastTap = currentTime;
     });
 
-    // Add a button to manually toggle drawing mode
-    var toggleButton = document.createElement('button');
-    toggleButton.innerHTML = 'Toggle Mode';
+    var toggleButton = document.getElementById('toggleButton');
     toggleButton.onclick = toggleDrawingMode;
-    document.body.appendChild(toggleButton);
 
-    // Function to update arrow position
     function updateArrow(arrow) {
         if (!arrow) return;
         var points = [arrow.start.left, arrow.start.top, arrow.end.left, arrow.end.top];
@@ -38,7 +40,6 @@ document.addEventListener("DOMContentLoaded", function() {
         canvas.renderAll();
     }
 
-    // Function to create an arrow
     function createArrow(fromObj, toObj) {
         var points = [fromObj.left, fromObj.top, toObj.left, toObj.top];
         var newArrow = new fabric.Line(points, {
@@ -55,21 +56,18 @@ document.addEventListener("DOMContentLoaded", function() {
         return newArrow;
     }
 
-    // Handle object selection for connecting them
     canvas.on('selection:created', function(e) {
         if (!isDrawingMode) {
             selectedObjects.push(e.selected[0]);
 
-            // Connect two selected objects with an arrow
             if (selectedObjects.length === 2) {
                 arrow = createArrow(selectedObjects[0], selectedObjects[1]);
                 selectedObjects.forEach(obj => obj.lines = (obj.lines || []).concat(arrow));
-                selectedObjects = []; // Reset the selection
+                selectedObjects = [];
             }
         }
     });
 
-    // Update arrow when objects move
     canvas.on('object:moving', function(e) {
         var activeObject = e.target;
         if (activeObject.lines) {
@@ -77,7 +75,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // Save functionality
     document.getElementById('saveButton').addEventListener('click', function() {
         var svg = canvas.toSVG();
         var blob = new Blob([svg], {type: 'image/svg+xml'});
