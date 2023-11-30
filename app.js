@@ -8,16 +8,10 @@ document.addEventListener("DOMContentLoaded", function() {
     canvas.isDrawingMode = isDrawingMode;
     let selectedObjects = [];
     let arrow;
-    let group;
 
     function toggleDrawingMode() {
         isDrawingMode = !isDrawingMode;
         canvas.isDrawingMode = isDrawingMode;
-        // Group selected objects when switching to selection mode
-        if (!isDrawingMode && canvas.getActiveObject()) {
-            group = canvas.getActiveObject().toGroup();
-            canvas.requestRenderAll();
-        }
     }
 
     function logDebugInfo(message) {
