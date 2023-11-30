@@ -1,3 +1,4 @@
+```javascript
 document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c', { selection: true });
     fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
@@ -11,6 +12,7 @@ document.addEventListener("DOMContentLoaded", function() {
     function toggleDrawingMode() {
         isDrawingMode = !isDrawingMode;
         canvas.isDrawingMode = isDrawingMode;
+        logDebugInfo("Toggled drawing mode: " + isDrawingMode);
     }
 
     function logDebugInfo(message) {
@@ -19,6 +21,7 @@ document.addEventListener("DOMContentLoaded", function() {
         debugPanel.scrollTop = debugPanel.scrollHeight;
     }
 
+    // Touch event for mobile devices
     canvas.on('touch:gesture', function(e) {
         var currentTime = new Date().getTime();
         var tapLength = currentTime - lastTap;
@@ -28,6 +31,12 @@ document.addEventListener("DOMContentLoaded", function() {
             e.e.preventDefault();
         }
         lastTap = currentTime;
+    });
+
+    // Mouse event for non-touch devices
+    canvas.on('mouse:dblclick', function() {
+        logDebugInfo('Mouse double click detected.');
+        toggleDrawingMode();
     });
 
     var toggleButton = document.getElementById('toggleButton');
@@ -85,3 +94,4 @@ document.addEventListener("DOMContentLoaded", function() {
         link.click();
     });
 });
+```
