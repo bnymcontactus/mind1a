@@ -3,9 +3,31 @@ document.addEventListener("DOMContentLoaded", function() {
     fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
 
     let isDrawingMode = true;
+    let lastTap = 0;
     canvas.isDrawingMode = isDrawingMode;
     let selectedObjects = [];
     let arrow;
+
+    function toggleDrawingMode() {
+        isDrawingMode = !isDrawingMode;
+        canvas.isDrawingMode = isDrawingMode;
+        if (!isDrawingMode) {
+            // Remove the dot created by double-tapping or double-clicking
+            canvas.remove(canvas.getActiveObject());
+            canvas.discardActiveObject();
+        }
+    }
+
+    // Handle double-tap for touch devices
+    canvas.on('touch:gesture', function(e) {
+        var currentTime = new Date().getTime();
+        var tapLength = currentTime - lastTap;
+        if (tapLength < 500 && tapLength > 0) {
+            toggleDrawingMode();
+            e.e.preventDefault();
+        }
+        lastTap = currentTime;
+    });
 
     // Function to update arrow position
     function updateArrow(arrow) {
@@ -56,13 +78,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Toggle drawing mode on double-click
     canvas.on('mouse:dblclick', function() {
-        isDrawingMode = !isDrawingMode;
-        canvas.isDrawingMode = isDrawingMode;
-        if (!isDrawingMode) {
-            // Remove the dot created by double-clicking
-            canvas.remove(canvas.getActiveObject());
-            canvas.discardActiveObject();
-        }
+        toggleDrawingMode();
     });
 
     // Save functionality
