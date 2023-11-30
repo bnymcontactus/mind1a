@@ -1,3 +1,4 @@
+
 ```javascript
 document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c', { selection: true });
@@ -8,11 +9,16 @@ document.addEventListener("DOMContentLoaded", function() {
     canvas.isDrawingMode = isDrawingMode;
     let selectedObjects = [];
     let arrow;
+    let group;
 
     function toggleDrawingMode() {
         isDrawingMode = !isDrawingMode;
         canvas.isDrawingMode = isDrawingMode;
-        logDebugInfo("Toggled drawing mode: " + isDrawingMode);
+        // Group selected objects when switching to selection mode
+        if (!isDrawingMode && canvas.getActiveObject()) {
+            group = canvas.getActiveObject().toGroup();
+            canvas.requestRenderAll();
+        }
     }
 
     function logDebugInfo(message) {
@@ -21,7 +27,6 @@ document.addEventListener("DOMContentLoaded", function() {
         debugPanel.scrollTop = debugPanel.scrollHeight;
     }
 
-    // Touch event for mobile devices
     canvas.on('touch:gesture', function(e) {
         var currentTime = new Date().getTime();
         var tapLength = currentTime - lastTap;
@@ -31,12 +36,6 @@ document.addEventListener("DOMContentLoaded", function() {
             e.e.preventDefault();
         }
         lastTap = currentTime;
-    });
-
-    // Mouse event for non-touch devices
-    canvas.on('mouse:dblclick', function() {
-        logDebugInfo('Mouse double click detected.');
-        toggleDrawingMode();
     });
 
     var toggleButton = document.getElementById('toggleButton');
