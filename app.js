@@ -1,5 +1,4 @@
 
-```javascript
 document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c', { selection: true });
     fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
@@ -93,4 +92,3 @@ document.addEventListener("DOMContentLoaded", function() {
         link.click();
     });
 });
-```
