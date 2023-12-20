@@ -1,26 +1,69 @@
+{function() {
 
-document.addEventListener("DOMContentLoaded", function() {
-    var canvas = new fabric.Canvas('c');
-    var isGroupingMode = false;
+  function add() {
+    var red = new fabric.Rect({
+      top: Math.random() * canvas.height, left: Math.random() * canvas.width, width: 80, height: 50, fill: 'red' });
+    var blue = new fabric.Rect({
+      top: Math.random() * canvas.height, left: Math.random() * canvas.width, width: 50, height: 70, fill: 'blue' });
+    var green = new fabric.Rect({
+      top: Math.random() * canvas.height, left: Math.random() * canvas.width, width: 60, height: 60, fill: 'green' });
+    canvas.add(red, blue, green);
+  }
 
-    document.getElementById('toggleButton').addEventListener('click', function() {
-        isGroupingMode = !isGroupingMode;
-        canvas.isDrawingMode = !isGroupingMode;
-    });
+  var $ = function(id){return document.getElementById(id)};
 
-    document.getElementById('groupButton').addEventListener('click', function() {
-        if (canvas.getActiveObject() && canvas.getActiveObject().type === 'activeSelection' && isGroupingMode) {
-            canvas.getActiveObject().toGroup();
-            canvas.requestRenderAll();
+  var canvas = this.__canvas = new fabric.Canvas('c');
+  var red = new fabric.Rect({
+    top: 100, left: 0, width: 80, height: 50, fill: 'red' });
+  var blue = new fabric.Rect({
+    top: 0, left: 100, width: 50, height: 70, fill: 'blue' });
+  var green = new fabric.Rect({
+    top: 100, left: 100, width: 60, height: 60, fill: 'green' });
+  fabric.Object.prototype.transparentCorners = false;
+  canvas.add(red, blue, green)
+  var group = $('group'),
+      ungroup = $('ungroup'),
+      multiselect = $('multiselect'),
+      addmore = $('addmore'),
+      discard = $('discard');
+
+      addmore.onclick = add;
+
+      multiselect.onclick = function() {
+        canvas.discardActiveObject();
+        var sel = new fabric.ActiveSelection(canvas.getObjects(), {
+          canvas: canvas,
+        });
+        canvas.setActiveObject(sel);
+        canvas.requestRenderAll();
+      }
+
+      group.onclick = function() {
+        if (!canvas.getActiveObject()) {
+          return;
         }
-    });
-
-    document.getElementById('ungroupButton').addEventListener('click', function() {
-        if (canvas.getActiveObject() && canvas.getActiveObject().type === 'group' && isGroupingMode) {
-            canvas.getActiveObject().toActiveSelection();
-            canvas.requestRenderAll();
+        if (canvas.getActiveObject().type !== 'activeSelection') {
+          return;
         }
-    });
+        canvas.getActiveObject().toGroup();
+        canvas.requestRenderAll();
+      }
 
-    canvas.isDrawingMode = true;
-});
+      ungroup.onclick = function() {
+        if (!canvas.getActiveObject()) {
+          return;
+        }
+        if (canvas.getActiveObject().type !== 'group') {
+          return;
+        }
+        canvas.getActiveObject().toActiveSelection();
+        canvas.requestRenderAll();
+      }
+
+      discard.onclick = function() {
+        canvas.discardActiveObject();
+        canvas.requestRenderAll();
+      }
+
+
+})();
