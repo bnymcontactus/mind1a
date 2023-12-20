@@ -2,48 +2,43 @@
 document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c');
     var isGroupingMode = false;
-    var selectedGroup = null;
+    var selectedGroups = [];
 
+    // Toggle between drawing mode and grouping mode
     document.getElementById('toggleButton').addEventListener('click', function() {
         isGroupingMode = !isGroupingMode;
+        canvas.isDrawingMode = !isGroupingMode;
+    });
 
+    // Group selected objects or connect groups with a line
+    canvas.on('selection:created', function(e) {
         if (isGroupingMode) {
-            canvas.isDrawingMode = false;
-        } else {
-            canvas.isDrawingMode = true;
-            selectedGroup = null; // Reset selected group
+            // Create a group from selected objects
+            var group = new fabric.Group(e.selected, { canvas: canvas });
+            canvas.add(group);
+            canvas.discardActiveObject();  // Clear selection
         }
     });
 
-    canvas.on('object:selected', function(e) {
-        if (isGroupingMode) {
-            if (!selectedGroup) {
-                // First group selected
-                selectedGroup = e.target;
-            } else {
-                // Second group selected, draw a line between them
-                var points = [
-                    selectedGroup.left, 
-                    selectedGroup.top, 
-                    e.target.left, 
-                    e.target.top
-                ];
-                var line = new fabric.Line(points, { stroke: 'black' });
+    // Handle selection of groups for connecting them
+    canvas.on('mouse:up', function(e) {
+        if (isGroupingMode && e.target && e.target.type === 'group') {
+            selectedGroups.push(e.target);
+
+            // When two groups are selected, draw a line between them
+            if (selectedGroups.length === 2) {
+                var fromGroup = selectedGroups[0];
+                var toGroup = selectedGroups[1];
+                var line = new fabric.Line(
+                    [fromGroup.left, fromGroup.top, toGroup.left, toGroup.top], 
+                    { stroke: 'black', selectable: false }
+                );
                 canvas.add(line);
-                selectedGroup = null; // Reset for next selection
+                selectedGroups = [];  // Reset for next selection
             }
         }
     });
 
-    // Function to group selected objects
-    canvas.on('selection:created', function(e) {
-        if (isGroupingMode) {
-            var group = new fabric.Group(e.selected, { canvas: canvas });
-            canvas.setActiveObject(group);
-            canvas.requestRenderAll();
-        }
-    });
-
-    // Enable drawing mode by default
+    // Start with drawing mode enabled
     canvas.isDrawingMode = true;
 });
