@@ -1,79 +1,49 @@
+
 document.addEventListener("DOMContentLoaded", function() {
-    var canvas = new fabric.Canvas('c', { selection: true });
-    fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
+    var canvas = new fabric.Canvas('c');
+    var isGroupingMode = false;
+    var selectedGroup = null;
 
-    let isDrawingMode = true;
-    canvas.isDrawingMode = isDrawingMode;
-    let selectedObjects = [];
-    let arrow;
+    document.getElementById('toggleButton').addEventListener('click', function() {
+        isGroupingMode = !isGroupingMode;
 
-    // Function to update arrow position
-    function updateArrow(arrow) {
-        if (!arrow) return;
-        var points = [arrow.start.left, arrow.start.top, arrow.end.left, arrow.end.top];
-        arrow.set({ x1: points[0], y1: points[1], x2: points[2], y2: points[3] });
-        canvas.renderAll();
-    }
+        if (isGroupingMode) {
+            canvas.isDrawingMode = false;
+        } else {
+            canvas.isDrawingMode = true;
+            selectedGroup = null; // Reset selected group
+        }
+    });
 
-    // Function to create an arrow
-    function createArrow(fromObj, toObj) {
-        var points = [fromObj.left, fromObj.top, toObj.left, toObj.top];
-        var newArrow = new fabric.Line(points, {
-            fill: 'black',
-            stroke: 'black',
-            strokeWidth: 2,
-            selectable: false,
-            evented: false,
-            start: fromObj,
-            end: toObj
-        });
-
-        canvas.add(newArrow);
-        return newArrow;
-    }
-
-    // Handle object selection for connecting them
-    canvas.on('selection:created', function(e) {
-        if (!isDrawingMode) {
-            selectedObjects.push(e.selected[0]);
-
-            // Connect two selected objects with an arrow
-            if (selectedObjects.length === 2) {
-                arrow = createArrow(selectedObjects[0], selectedObjects[1]);
-                selectedObjects.forEach(obj => obj.lines = (obj.lines || []).concat(arrow));
-                selectedObjects = []; // Reset the selection
+    canvas.on('object:selected', function(e) {
+        if (isGroupingMode) {
+            if (!selectedGroup) {
+                // First group selected
+                selectedGroup = e.target;
+            } else {
+                // Second group selected, draw a line between them
+                var points = [
+                    selectedGroup.left, 
+                    selectedGroup.top, 
+                    e.target.left, 
+                    e.target.top
+                ];
+                var line = new fabric.Line(points, { stroke: 'black' });
+                canvas.add(line);
+                selectedGroup = null; // Reset for next selection
             }
         }
     });
 
-    // Update arrow when objects move
-    canvas.on('object:moving', function(e) {
-        var activeObject = e.target;
-        if (activeObject.lines) {
-            activeObject.lines.forEach(line => updateArrow(line));
+    // Function to group selected objects
+    canvas.on('selection:created', function(e) {
+        if (isGroupingMode) {
+            var group = new fabric.Group(e.selected, { canvas: canvas });
+            canvas.setActiveObject(group);
+            canvas.requestRenderAll();
         }
     });
 
-    // Toggle drawing mode on double-click
-    canvas.on('mouse:dblclick', function() {
-        isDrawingMode = !isDrawingMode;
-        canvas.isDrawingMode = isDrawingMode;
-        if (!isDrawingMode) {
-            // Remove the dot created by double-clicking
-            canvas.remove(canvas.getActiveObject());
-            canvas.discardActiveObject();
-        }
-    });
-
-    // Save functionality
-    document.getElementById('saveButton').addEventListener('click', function() {
-        var svg = canvas.toSVG();
-        var blob = new Blob([svg], {type: 'image/svg+xml'});
-        var url = URL.createObjectURL(blob);
-        var link = document.createElement('a');
-        link.download = 'mindmap.svg';
-        link.href = url;
-        link.click();
-    });
+    // Enable drawing mode by default
+    canvas.isDrawingMode = true;
 });
-
