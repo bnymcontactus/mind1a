@@ -1,19 +1,24 @@
 
 document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c');
-    var isGroupingMode = false;
+    var isDrawingMode = true;
 
-    canvas.isDrawingMode = true;
+    canvas.isDrawingMode = isDrawingMode;
 
     document.getElementById('toggleButton').addEventListener('click', function() {
-        isGroupingMode = !isGroupingMode;
-        canvas.isDrawingMode = !isGroupingMode;
+        isDrawingMode = !isDrawingMode;
+        canvas.isDrawingMode = isDrawingMode;
 
-        if (isGroupingMode && canvas.getActiveObject()) {
-            var group = new fabric.Group(canvas.getActiveObject().getObjects(), { canvas: canvas });
-            canvas.clear();
-            canvas.add(group);
+        if (!isDrawingMode) {
+            var objects = canvas.getObjects().filter(function(obj) {
+                return obj.type !== 'group';
+            });
+
+            if (objects.length > 0) {
+                var group = new fabric.Group(objects, { canvas: canvas });
+                canvas.clear();
+                canvas.add(group);
+            }
         }
     });
 });
- 
