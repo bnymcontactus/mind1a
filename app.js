@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c');
     var isDrawingMode = true;
@@ -10,13 +9,18 @@ document.addEventListener("DOMContentLoaded", function() {
         canvas.isDrawingMode = isDrawingMode;
 
         if (!isDrawingMode) {
-            var objects = canvas.getObjects().filter(function(obj) {
+            var objectsToGroup = canvas.getObjects().filter(function(obj) {
+                // Only group objects that are not part of a group
                 return obj.type !== 'group';
             });
 
-            if (objects.length > 0) {
-                var group = new fabric.Group(objects, { canvas: canvas });
-                canvas.add(group);
+            if (objectsToGroup.length > 0) {
+                var newGroup = new fabric.Group(objectsToGroup, { canvas: canvas });
+                // Remove the individual objects and add the group instead
+                objectsToGroup.forEach(function(obj) {
+                    canvas.remove(obj);
+                });
+                canvas.add(newGroup);
             }
         }
     });
