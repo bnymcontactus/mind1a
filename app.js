@@ -16,7 +16,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
             if (objects.length > 0) {
                 var group = new fabric.Group(objects, { canvas: canvas });
-                canvas.clear();
                 canvas.add(group);
             }
         }
