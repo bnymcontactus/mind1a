@@ -1,4 +1,4 @@
-{function() {
+(function() {
 
   function add() {
     var red = new fabric.Rect({
