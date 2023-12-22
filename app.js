@@ -1,12 +1,11 @@
 document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c');
     var isDrawingMode = true;
-    var watermarkText = "123"; // Replace with your desired watermark number
+    var newGroup = null;
+    var lastGroup = null;
 
-    canvas.isDrawingMode = isDrawingMode;
-
-    // Create a static, non-interactive watermark
-    var watermark = new fabric.Text(watermarkText, {
+    // Create a watermark
+    var watermark = new fabric.Text('2', {
         fontSize: 100,
         fill: 'grey',
         left: 50,
@@ -15,11 +14,12 @@ document.addEventListener("DOMContentLoaded", function() {
         evented: false
     });
     canvas.add(watermark);
-    canvas.sendToBack(watermark); // Send watermark to back
+    canvas.sendToBack(watermark);
 
     document.getElementById('toggleButton').addEventListener('click', function() {
         isDrawingMode = !isDrawingMode;
         canvas.isDrawingMode = isDrawingMode;
+        newGroup = null; // Reset new group on toggling
 
         if (!isDrawingMode) {
             var objectsToGroup = canvas.getObjects().filter(function(obj) {
@@ -27,12 +27,27 @@ document.addEventListener("DOMContentLoaded", function() {
             });
 
             if (objectsToGroup.length > 0) {
-                var newGroup = new fabric.Group(objectsToGroup, { canvas: canvas });
+                newGroup = new fabric.Group(objectsToGroup, { canvas: canvas });
                 objectsToGroup.forEach(function(obj) {
                     canvas.remove(obj);
                 });
                 canvas.add(newGroup);
+                lastGroup = newGroup;
             }
         }
     });
+
+    canvas.on('mouse:up', function(e) {
+        if (!isDrawingMode && newGroup && e.target && e.target.type === 'group' && e.target !== newGroup) {
+            // Draw a line between the new group and the selected group
+            var line = new fabric.Line(
+                [newGroup.left, newGroup.top, e.target.left, e.target.top], 
+                { stroke: 'blue', selectable: false }
+            );
+            canvas.add(line);
+            newGroup = null; // Reset new group after drawing the line
+        }
+    });
+
+    canvas.isDrawingMode = true;
 });
