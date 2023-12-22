@@ -2,13 +2,13 @@ document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c');
     var isDrawingMode = true;
     var currentGroup = null;
-    var previousGroup = null;
+    var lastGroup = null;
 
     // Enable free drawing by default
     canvas.isDrawingMode = isDrawingMode;
 
     // Create a watermark
-    var watermark = new fabric.Text('Watermark', {
+    var watermark = new fabric.Text('2', {
         fontSize: 100,
         fill: 'grey',
         left: 50,
@@ -21,16 +21,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Function to create a line
     function createLine(fromGroup, toGroup) {
-        if (!fromGroup || !toGroup) return;
         var points = [fromGroup.left, fromGroup.top, toGroup.left, toGroup.top];
         var line = new fabric.Line(points, {
             fill: 'blue',
             stroke: 'blue',
             strokeWidth: 2,
             selectable: false,
-            evented: false,
-            start: fromGroup,
-            end: toGroup
+            evented: false
         });
 
         canvas.add(line);
@@ -44,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function() {
         canvas.renderAll();
     }
 
-    // Toggle drawing mode
+    // Toggle drawing and grouping mode
     document.getElementById('toggleButton').addEventListener('click', function() {
         isDrawingMode = !isDrawingMode;
         canvas.isDrawingMode = isDrawingMode;
@@ -55,26 +52,30 @@ document.addEventListener("DOMContentLoaded", function() {
             });
 
             if (objectsToGroup.length > 0) {
-                previousGroup = currentGroup;
+                lastGroup = currentGroup;
                 currentGroup = new fabric.Group(objectsToGroup, { canvas: canvas });
                 objectsToGroup.forEach(function(obj) {
                     canvas.remove(obj);
                 });
                 canvas.add(currentGroup);
-
-                if (previousGroup) {
-                    var line = createLine(previousGroup, currentGroup);
-                    currentGroup.line = line;
-                    previousGroup.line = line;
-
-                    currentGroup.on('moving', function() {
-                        updateLine(line);
-                    });
-                    previousGroup.on('moving', function() {
-                        updateLine(line);
-                    });
-                }
             }
+        }
+    });
+
+    // Draw a line between the last group and a newly selected group
+    canvas.on('selection:created', function(e) {
+        if (!isDrawingMode && lastGroup && e.target && e.target.type === 'group' && e.target !== lastGroup) {
+            var line = createLine(lastGroup, e.target);
+            lastGroup.line = line;
+            e.target.line = line;
+
+            // Attach event listeners to update line position
+            lastGroup.on('moving', function() {
+                updateLine(line);
+            });
+            e.target.on('moving', function() {
+                updateLine(line);
+            });
         }
     });
 });
