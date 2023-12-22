@@ -1,9 +1,10 @@
-
 document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c');
     var isDrawingMode = true;
     var selectedGroups = [];
-    var watermark = new fabric.Text('Default', {
+
+    // Initialize watermark
+    var watermark = new fabric.Text('Drawing Mode', {
         fontSize: 100,
         fill: 'grey',
         left: 50,
@@ -14,38 +15,45 @@ document.addEventListener("DOMContentLoaded", function() {
     canvas.add(watermark);
     canvas.sendToBack(watermark);
 
-    function updateWatermark(text) {
-        watermark.set({ text: text });
-        canvas.renderAll();
-    }
-
+    // Enable drawing mode
     canvas.isDrawingMode = isDrawingMode;
-    updateWatermark('Drawing Mode');
 
+    // Toggle between drawing and grouping mode
     document.getElementById('toggleButton').addEventListener('click', function() {
         isDrawingMode = !isDrawingMode;
         canvas.isDrawingMode = isDrawingMode;
-        updateWatermark(isDrawingMode ? 'Drawing Mode' : 'Grouping Mode');
-        selectedGroups = []; // Reset selected groups when toggling mode
+        watermark.setText(isDrawingMode ? 'Drawing Mode' : 'Grouping Mode');
+        canvas.renderAll();
+
+        if (!isDrawingMode) {
+            var objectsToGroup = canvas.getObjects().filter(obj => obj.type !== 'group' && obj !== watermark);
+            if (objectsToGroup.length > 0) {
+                var group = new fabric.Group(objectsToGroup, { canvas: canvas });
+                canvas.add(group);
+                objectsToGroup.forEach(obj => canvas.remove(obj));
+            }
+        }
     });
 
+    // Button to create a line between selected groups
     document.getElementById('createLineButton').addEventListener('click', function() {
-        updateWatermark('Drawing Lines Mode');
         canvas.off('selection:created');
         canvas.on('selection:created', function(e) {
             if (e.target.type === 'group') {
                 selectedGroups.push(e.target);
                 if (selectedGroups.length === 2) {
-                    createLineBetweenGroups(selectedGroups[0], selectedGroups[1]);
-                    selectedGroups = [];
-                    updateWatermark('Grouping Mode');
+                    createLine(selectedGroups[0], selectedGroups[1]);
+                    selectedGroups = []; // Reset for next operation
                 }
             }
         });
+        watermark.setText('Drawing Lines Mode');
+        canvas.renderAll();
     });
 
-    function createLineBetweenGroups(group1, group2) {
-        var line = new fabric.Line([group1.left, group1.top, group2.left, group2.top], {
+    // Function to create a line
+    function createLine(fromGroup, toGroup) {
+        var line = new fabric.Line([fromGroup.left, fromGroup.top, toGroup.left, toGroup.top], {
             fill: 'blue',
             stroke: 'blue',
             strokeWidth: 2,
@@ -54,12 +62,12 @@ document.addEventListener("DOMContentLoaded", function() {
         });
 
         function updateLine() {
-            line.set({ x1: group1.left, y1: group1.top, x2: group2.left, y2: group2.top });
+            line.set({ x1: fromGroup.left, y1: fromGroup.top, x2: toGroup.left, y2: toGroup.top });
             canvas.renderAll();
         }
 
-        group1.on('moving', updateLine);
-        group2.on('moving', updateLine);
+        fromGroup.on('moving', updateLine);
+        toGroup.on('moving', updateLine);
 
         canvas.add(line);
     }
