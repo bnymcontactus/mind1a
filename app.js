@@ -1,10 +1,12 @@
 document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c');
     var isDrawingMode = true;
+    var currentGroup = null;
+    var previousGroup = null;
     var selectedGroups = [];
 
     // Initialize watermark
-    var watermark = new fabric.Text('Drawing Mode1', {
+    var watermark = new fabric.Text('Drawing Mode2', {
         fontSize: 100,
         fill: 'grey',
         left: 50,
@@ -28,8 +30,9 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!isDrawingMode) {
             var objectsToGroup = canvas.getObjects().filter(obj => obj.type !== 'group' && obj !== watermark);
             if (objectsToGroup.length > 0) {
-                var group = new fabric.Group(objectsToGroup, { canvas: canvas });
-                canvas.add(group);
+                previousGroup = currentGroup;
+                currentGroup = new fabric.Group(objectsToGroup, { canvas: canvas });
+                canvas.add(currentGroup);
                 objectsToGroup.forEach(obj => canvas.remove(obj));
             }
         }
