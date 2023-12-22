@@ -1,9 +1,10 @@
+
 document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c');
     var selectedGroups = [];
 
     // Initialize watermark
-    var watermark = new fabric.Text('3', {
+    var watermark = new fabric.Text('Watermark', {
         fontSize: 100,
         fill: 'grey',
         left: 50,
