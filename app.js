@@ -2,10 +2,13 @@ document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c');
     var isDrawingMode = true;
     var newGroup = null;
-    var line = null;
+    var allGroups = [];
 
-    // Create a watermark
-    var watermark = new fabric.Text('3', {
+    // Initialize the canvas for drawing
+    canvas.isDrawingMode = isDrawingMode;
+
+    // Watermark
+    var watermark = new fabric.Text('123', {
         fontSize: 100,
         fill: 'grey',
         left: 50,
@@ -16,6 +19,7 @@ document.addEventListener("DOMContentLoaded", function() {
     canvas.add(watermark);
     canvas.sendToBack(watermark);
 
+    // Toggle button event listener
     document.getElementById('toggleButton').addEventListener('click', function() {
         isDrawingMode = !isDrawingMode;
         canvas.isDrawingMode = isDrawingMode;
@@ -31,48 +35,46 @@ document.addEventListener("DOMContentLoaded", function() {
                     canvas.remove(obj);
                 });
                 canvas.add(newGroup);
+                allGroups.push(newGroup);
             }
-        } else {
-            newGroup = null;
-            line = null;
         }
     });
 
+    // Selection event listener for drawing lines
     canvas.on('selection:created', function(e) {
         if (!isDrawingMode && newGroup && e.target && e.target.type === 'group' && e.target !== newGroup) {
-            // Draw an anchored line between the new group and the selected group
-            line = makeLine([newGroup.left, newGroup.top, e.target.left, e.target.top], newGroup, e.target);
-            canvas.add(line);
+            drawLineBetweenGroups(newGroup, e.target);
+            newGroup = null; // Reset newGroup after drawing the line
         }
     });
 
+    function drawLineBetweenGroups(group1, group2) {
+        var line = makeLine([group1.left, group1.top, group2.left, group2.top], group1, group2);
+        canvas.add(line);
+
+        // Update line position when groups move
+        group1.on('moving', function() {
+            updateLinePosition(line, group1, group2);
+        });
+        group2.on('moving', function() {
+            updateLinePosition(line, group1, group2);
+        });
+    }
+
     function makeLine(coords, startObj, endObj) {
-        var newLine = new fabric.Line(coords, {
+        return new fabric.Line(coords, {
             fill: 'blue',
             stroke: 'blue',
             strokeWidth: 2,
             selectable: false,
-            evented: false
+            evented: false,
+            start: startObj,
+            end: endObj
         });
-
-        newLine.start = startObj;
-        newLine.end = endObj;
-
-        // Update line position when objects move
-        startObj.on('moving', function() {
-            updateLinePosition(newLine);
-        });
-        endObj.on('moving', function() {
-            updateLinePosition(newLine);
-        });
-
-        return newLine;
     }
 
-    function updateLinePosition(line) {
-        line.set({ 'x1': line.start.left, 'y1': line.start.top, 'x2': line.end.left, 'y2': line.end.top });
+    function updateLinePosition(line, startObj, endObj) {
+        line.set({ 'x1': startObj.left, 'y1': startObj.top, 'x2': endObj.left, 'y2': endObj.top });
         canvas.requestRenderAll();
     }
-
-    canvas.isDrawingMode = true;
 });
