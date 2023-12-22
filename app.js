@@ -2,10 +2,10 @@ document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c');
     var isDrawingMode = true;
     var newGroup = null;
-    var lastGroup = null;
+    var line = null;
 
     // Create a watermark
-    var watermark = new fabric.Text('2', {
+    var watermark = new fabric.Text('3', {
         fontSize: 100,
         fill: 'grey',
         left: 50,
@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('toggleButton').addEventListener('click', function() {
         isDrawingMode = !isDrawingMode;
         canvas.isDrawingMode = isDrawingMode;
-        newGroup = null; // Reset new group on toggling
 
         if (!isDrawingMode) {
             var objectsToGroup = canvas.getObjects().filter(function(obj) {
@@ -32,22 +31,48 @@ document.addEventListener("DOMContentLoaded", function() {
                     canvas.remove(obj);
                 });
                 canvas.add(newGroup);
-                lastGroup = newGroup;
             }
+        } else {
+            newGroup = null;
+            line = null;
         }
     });
 
-    canvas.on('mouse:up', function(e) {
+    canvas.on('selection:created', function(e) {
         if (!isDrawingMode && newGroup && e.target && e.target.type === 'group' && e.target !== newGroup) {
-            // Draw a line between the new group and the selected group
-            var line = new fabric.Line(
-                [newGroup.left, newGroup.top, e.target.left, e.target.top], 
-                { stroke: 'blue', selectable: false }
-            );
+            // Draw an anchored line between the new group and the selected group
+            line = makeLine([newGroup.left, newGroup.top, e.target.left, e.target.top], newGroup, e.target);
             canvas.add(line);
-            newGroup = null; // Reset new group after drawing the line
         }
     });
+
+    function makeLine(coords, startObj, endObj) {
+        var newLine = new fabric.Line(coords, {
+            fill: 'blue',
+            stroke: 'blue',
+            strokeWidth: 2,
+            selectable: false,
+            evented: false
+        });
+
+        newLine.start = startObj;
+        newLine.end = endObj;
+
+        // Update line position when objects move
+        startObj.on('moving', function() {
+            updateLinePosition(newLine);
+        });
+        endObj.on('moving', function() {
+            updateLinePosition(newLine);
+        });
+
+        return newLine;
+    }
+
+    function updateLinePosition(line) {
+        line.set({ 'x1': line.start.left, 'y1': line.start.top, 'x2': line.end.left, 'y2': line.end.top });
+        canvas.requestRenderAll();
+    }
 
     canvas.isDrawingMode = true;
 });
