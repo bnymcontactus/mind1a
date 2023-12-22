@@ -1,11 +1,9 @@
 document.addEventListener("DOMContentLoaded", function() {
     var canvas = new fabric.Canvas('c');
-    var isDrawingMode = true;
-    var currentGroup = null;
-    var previousGroup = null;
+    var selectedGroups = [];
 
     // Initialize watermark
-    var watermark = new fabric.Text('Watermark', {
+    var watermark = new fabric.Text('3', {
         fontSize: 100,
         fill: 'grey',
         left: 50,
@@ -17,29 +15,11 @@ document.addEventListener("DOMContentLoaded", function() {
     canvas.sendToBack(watermark);
 
     // Enable drawing mode
-    canvas.isDrawingMode = isDrawingMode;
+    canvas.isDrawingMode = true;
 
-    // Toggle between drawing and grouping mode
-    document.getElementById('toggleButton').addEventListener('click', function() {
-        isDrawingMode = !isDrawingMode;
-        canvas.isDrawingMode = isDrawingMode;
-
-        if (!isDrawingMode) {
-            // Grouping mode
-            var objectsToGroup = canvas.getObjects().filter(obj => obj.type !== 'group' && obj !== watermark);
-            if (objectsToGroup.length > 0) {
-                previousGroup = currentGroup;
-                currentGroup = new fabric.Group(objectsToGroup, { canvas: canvas });
-                canvas.add(currentGroup);
-                objectsToGroup.forEach(obj => canvas.remove(obj));
-            }
-        }
-    });
-
-    // Function to create a line
-    function createLine(from, to) {
-        var coords = [from.left, from.top, to.left, to.top];
-        var line = new fabric.Line(coords, {
+    // Function to create an anchored line
+    function createAnchoredLine(from, to) {
+        var line = new fabric.Line([from.left, from.top, to.left, to.top], {
             fill: 'blue',
             stroke: 'blue',
             strokeWidth: 2,
@@ -47,29 +27,28 @@ document.addEventListener("DOMContentLoaded", function() {
             evented: false
         });
         canvas.add(line);
-        return line;
-    }
 
-    // Update line position
-    function updateLine(line) {
-        var points = [line.start.left, line.start.top, line.end.left, line.end.top];
-        line.set({ x1: points[0], y1: points[1], x2: points[2], y2: points[3] });
-        canvas.renderAll();
-    }
-
-    // Create a line between the previous and current groups
-    canvas.on('selection:created', function(e) {
-        if (!isDrawingMode && previousGroup && e.target === currentGroup) {
-            var line = createLine(previousGroup, currentGroup);
-            // Attach the line to both groups
-            line.start = previousGroup;
-            line.end = currentGroup;
-            previousGroup.line = line;
-            currentGroup.line = line;
-
-            // Update line position when groups move
-            previousGroup.on('moving', function() { updateLine(line); });
-            currentGroup.on('moving', function() { updateLine(line); });
+        // Attach line to groups and update its position when they move
+        line.start = from;
+        line.end = to;
+        function updateLine() {
+            line.set({ x1: line.start.left, y1: line.start.top, x2: line.end.left, y2: line.end.top });
+            canvas.requestRenderAll();
         }
+        from.on('moving', updateLine);
+        to.on('moving', updateLine);
+    }
+
+    // Button to listen for two group selections
+    document.getElementById('createLineButton').addEventListener('click', function() {
+        canvas.on('selection:created', function(e) {
+            if (e.target.type === 'group') {
+                selectedGroups.push(e.target);
+                if (selectedGroups.length === 2) {
+                    createAnchoredLine(selectedGroups[0], selectedGroups[1]);
+                    selectedGroups = []; // Reset for next operation
+                }
+            }
+        });
     });
 });
