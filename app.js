@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var selectedGroups = [];
 
     // Initialize watermark
-    var watermark = new fabric.Text('Drawing Mode', {
+    var watermark = new fabric.Text('Drawing Mode1', {
         fontSize: 100,
         fill: 'grey',
         left: 50,
